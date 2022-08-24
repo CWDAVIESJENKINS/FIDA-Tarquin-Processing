@@ -1,0 +1,5 @@
+format jmrui_txt
+fs 5999.88
+ft 297185930.000000
+echo 0.078000
+rescale_lcm_basis false

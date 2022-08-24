@@ -1,5 +1,5 @@
 CWDaviesJenkins
-Set of functions for processing of Tarquin (Wilson étal 2011) data via Matlab. Written at CUBRIC, Cardiff University under WSA grant. Uses FID-A  (https://github.com/CIC-methods/FID-A), and structural functions were adapted from co-registration functions in Gannet (https://github.com/richardedden/Gannet3.1). 
+Set of functions for processing of Tarquin (Wilson étal 2011) data via Matlab. Written at CUBRIC, Cardiff University under WSA grant. Uses FID-A  (https://github.com/CIC-methods/FID-A), and structural functions were adapted from co-registration functions in Gannet (https://github.com/richardedden/Gannet3.1). A modified version of FID-A may be found in lib/
 
 Before running, please update Tarquin_Config.m to reflect your Tarquin installation path.
 
