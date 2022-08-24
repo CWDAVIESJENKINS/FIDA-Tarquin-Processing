@@ -1,4 +1,4 @@
-function [OUT , Stats , RES] = Tarquin_Process(FIT , Info , Met , AdditionalFields)
+function [OUT , Stats , RES] = Tarquin_Stats(FIT , Info , Met , AdditionalFields)
 % V0.2
 % Function for the automated processing of an array of Tarquin fit results.
 % ICCs and CVs are calcualated for all specified metabolites and ratios, and

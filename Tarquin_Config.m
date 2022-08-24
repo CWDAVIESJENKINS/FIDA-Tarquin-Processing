@@ -1,4 +1,3 @@
 %% Config options:
-
-TPath = '';     %Path to Tarquin installation
-Del=true;       %Delete Taquin Files after production? 
+TPath = '/Applications/tarquingui.app/Contents/MacOS';     %Path to Tarquin installation
+Del=false;       %Delete Taquin Files after production? 
