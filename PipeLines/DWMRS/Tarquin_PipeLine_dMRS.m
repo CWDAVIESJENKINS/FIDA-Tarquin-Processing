@@ -38,14 +38,20 @@ for J=1:S(1) %loop over directions
     R2(J) = DiffFit.Mono.GOF.rsquare;
 end
 
+%% Make some pretty pictures
 F = get(gca,'Children');
-legend(F([1,3,5]),{'Dir1','Dir 2','Dir 3'});
+LInd = 1:2:length(F); % Indices of lines fitted
+Leg={};
+for J=1:length(LInd)
+    Leg = [Leg,sprintf('Dir %i',J)];
+end
+legend(F(LInd),Leg);
 grid minor;xlabel('Nominal b-value');ylabel('Signal (a.u.)');
 set(gca,'YScale','log');title('Mono-exponential fit')
 CJ_SavFig(gcf,'Mono_b_TNAA',OutLoc);
 
 
-%% Make some pretty pictures
+
 
 
 

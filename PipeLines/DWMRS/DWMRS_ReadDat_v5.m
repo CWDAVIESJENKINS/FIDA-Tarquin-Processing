@@ -53,8 +53,7 @@ end
 RawData.p.RiseTime = RawData.p.alFree{12};
 Ndir = RawData.p.alFree{4};
 Ng = RawData.p.alFree{5};
-%RepSize = Ndir*Ng+1;
-RepSize=16;
+RepSize = Ndir*Ng+1;
 RawData.p.RawDataLocation = file_Met; % Add data locations to structure
 if Water_reference
     Nav_ref = RawData_ref.sz(3)/RepSize;
@@ -198,7 +197,7 @@ for J=1:RepSize
         end
     end
 end
-keyboard
+
 %% Averaging, ECC, and freq/phase correction
 Spec_Av=cell(1,RepSize);  Spec_Av_ECC=cell(1,RepSize);  Specw_Av=cell(1,RepSize); %Pre-alocate cells
 Out_specs=zeros(CC.sz(1),RepSize);  Out_fids=zeros(CC.sz(1),RepSize);
@@ -309,9 +308,9 @@ colorbar;colormap hot;ylabel('Frequency (PPM)');xlabel('G (mT/m)');
 %
 Fig_Combined = figure;
 %Fig_Combined.Position = [1,1,1133,920]; 
-subplot2(3,1,1);plot(RawData.ppm,real(RawData.specs(:,:,1)));xlim([1.5 4]);set(gca, 'XTickLabel', []);title('Raw data');grid on;set(gca,'XDir','reverse');
-subplot2(3,1,2);plot(RawData.ppm,real(CC.specs));xlim([1.5 4]);set(gca, 'XTickLabel', []);title('Coil combined data');grid on;set(gca,'XDir','reverse');
-subplot2(3,1,3);plot(RawData.ppm,real(Out_specs)');xlim([1.5 4]);title('Final data');grid on;set(gca,'XDir','reverse');
+subplot(3,1,1);plot(RawData.ppm,real(RawData.specs(:,:,1)));xlim([1.5 4]);set(gca, 'XTickLabel', []);title('Raw data');grid on;set(gca,'XDir','reverse');
+subplot(3,1,2);plot(RawData.ppm,real(CC.specs));xlim([1.5 4]);set(gca, 'XTickLabel', []);title('Coil combined data');grid on;set(gca,'XDir','reverse');
+subplot(3,1,3);plot(RawData.ppm,real(Out_specs)');xlim([1.5 4]);title('Final data');grid on;set(gca,'XDir','reverse');
 xlabel('Frequency (PPM)');
 
 %% If Out directory specified, then save combined spectra in repsective directories & sumary plots
@@ -337,10 +336,10 @@ if exist('OutDir','var')
     end
     cd(Home)
 
-    Out_Structrure.List.Met = FindFiles([OutDir,'/Met/*.txt']);Out_Structrure.List.Met=Out_Structrure.List.Met(:,1);
+    Out_Structrure.List.Met = Find_Files([OutDir,'/Met/*.txt']);
     if Water_reference
-        Out_Structrure.List.Met_ECC = FindFiles([OutDir,'/Met_ECC/*.txt']);Out_Structrure.List.Met=Out_Structrure.List.Met_ECC(:,1);
-        Out_Structrure.List.Ref = FindFiles([OutDir,'/Ref/*.txt']);Out_Structrure.List.Ref=Out_Structrure.List.Ref{1,1};
+        Out_Structrure.List.Met_ECC = Find_Files([OutDir,'/Met_ECC/*.txt']);
+        Out_Structrure.List.Ref = Find_Files([OutDir,'/Ref/*.txt']);
     end
 end
 
@@ -434,4 +433,9 @@ end
 Out.sz = size(Out.fids);
 Out.averages = Out.sz(2);
 
+end
+
+function[Ls] = Find_Files(DIR)
+Ls = dir(DIR);
+Ls = join([{Ls.folder}',{Ls.name}'],filesep);
 end

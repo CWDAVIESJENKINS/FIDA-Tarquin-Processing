@@ -1,16 +1,14 @@
-Plotting%% Options:
+function[] = End2End_DWMRS_Dist2(Locations)
+% Full end2end fit wrapper function. Locations correspond to:
+%Locations.RawData =      {'met.dat','ref.dat}; % Raw data location(s) - cell array if reference acquired, string otherwise
+%Locations.T1 =            'Struct.nii';
+%Locations.OutDIR =        'OutputDIR'; % Where to save outputs
+%Locations.ParameterFile = 'ParaFile.txt'; %MRS parameter file
 
-WaterScan = false; % Is this a water-unsuppressed MRS acquisition
+%% Options:
 
 Exclude_pts = false; % Whether to exclude points based on SNR or fit quality, as below
 SNR_Threshold = 3;      Q_Threshold = 1.5;
-
-Locations.RawData =      {'/cubric/scratch/sapcj3/dMRS_2/Data/20200213_80/meas_MID842_dMRS_gmax80_5grad_3dir_met_FID7908.dat'
-'/cubric/scratch/sapcj3/dMRS_2/Data/20200213_80/meas_MID841_dMRS_gmax80_5grad_3dir_ref_FID7907.dat'}; % Raw data location(s) - cell array if reference acquired, string otherwise
-Locations.T1 =            '';
-Locations.OutDIR =        '/cubric/scratch/sapcj3/dMRS_2/Analysis/20200213_80'; % Where to save outputs
-%
-Locations.ParameterFile = '/cubric/scratch/sapcj3/dMRS/ParaFile.txt'; %MRS parameter file
 
 %% Initialise some parameters
 
@@ -21,7 +19,7 @@ Progress= zeros(1,5);
 
 Locations.SpecOut = [Locations.OutDIR,filesep,'SpecOut'];
 mkdir(Locations.SpecOut);
-[Spec, QA] = DWMRS_ReadDat_v5(Locations.RawData, Locations.SpecOut, WaterScan);
+[Spec, QA] = DWMRS_ReadDat_v5(Locations.RawData, Locations.SpecOut, false);
 Progress(1)=1;
 save(MatFile,'Spec','QA','Locations','Progress');
 
@@ -39,7 +37,7 @@ mkdir(Locations.SpecFit);
 Spec_Fit = cell(1,length(In));
 Flag = zeros(1,length(In));SNR = zeros(1,length(In));Q = zeros(1,length(In));
 for K = 1:length(In)
-    Spec_Fit{K} = Tarquin_Run(In{K}, '' , Locations.ParameterFile, '1h_brain', sprintf('--echo %f --te1 %f',Spec.te/1000,Spec.te/2000));
+    Spec_Fit{K} = Tarquin_Run(In{K}, '' , [Locations.SpecFit,filesep,sprintf('Tarq_%i',K)], Locations.ParameterFile, '1h_brain', sprintf('--echo %f --te1 %f',Spec.te/1000,Spec.te/2000));
     Flag(K) = Spec_Fit{K}.Flag;
     Q(K) = Spec_Fit{K}.Diag.Q;
     SNR(K) = Spec_Fit{K}.Diag.SNRmetab;
@@ -78,8 +76,8 @@ close all
 if ~strcmp(Locations.T1,'')
     Locations.Diff2 = [Locations.OutDIR,filesep,'Diff2'];
     mkdir(Locations.Diff2);
-    Locations.Nii = Gen_nii(Locations.T1, Locations.Diff2);
-    Spec = Struct_CoRegister(Spec, Locations.Nii, Locations.Diff2);
+    %Locations.Nii = Gen_nii(Locations.T1, Locations.Diff2);
+    Spec = Struct_CoRegister(Spec, Locations.T1, Locations.Diff2);
     Locations.NonLin.Mask = Spec.T1Reg.mask.outfile;
     
     bc = DWMRS_NonLinearity(Locations,fileparts(Locations.NonLin.Mask));
@@ -91,10 +89,14 @@ end
 %% Final diffusion Fit
 close all
 if ~strcmp(Locations.T1,'')
-    DiffFit2 = Tarquin_PipeLine_dMRS_Dist2(Spec_Fit, bc, Locations.Diff2);
-    D1_NAA = [DiffFit2.TNAA.x1(2), DiffFit2.TNAA.x2(2), DiffFit2.TNAA.x3(2)];
-    D1_Cho = [DiffFit2.TCho.x1(2), DiffFit2.TCho.x2(2), DiffFit2.TCho.x3(2)];
+    DiffFit2 = Tarquin_PipeLine_dMRS_Dist2(Spec, Spec_Fit, bc, Locations.Diff2);
+    D1_NAA = [];D1_Cho = [];
+    for JJ=1:length(fieldnames(DiffFit2.TNAA))/2 %loop over directions
+        D1_NAA = [D1_NAA, DiffFit2.TNAA.(sprintf('x%i',JJ))(2,:)];
+        D1_Cho = [D1_Cho, DiffFit2.TCho.(sprintf('x%i',JJ))(2,:)];
+    end
     Progress(5) = 1;
     save(MatFile,'Spec','QA','Locations','Progress','Spec_Fit','DiffFit1','b','bc','DiffFit2','D1_NAA','D1_Cho');
 end
 
+end

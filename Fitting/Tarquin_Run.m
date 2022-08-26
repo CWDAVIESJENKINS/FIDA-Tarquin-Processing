@@ -1,5 +1,5 @@
-function[Struct , RUN] = Tarquin_Run(File,File_Ref,Para,Basis,Args)
-%% function[Struct , RUN] = Tarquin_Run(File,File_Ref,Para,Basis,Args)
+function[Struct , RUN] = Tarquin_Run(File,File_Ref,OutName,Para,Basis,Args)
+%% function[Struct , RUN] = Tarquin_Run(File,File_Ref,OutName,Para,Basis,Args)
 %
 % V1.0
 % Matlab wrapper for Tarquin. Parses commandline arguments using system,
@@ -19,6 +19,7 @@ function[Struct , RUN] = Tarquin_Run(File,File_Ref,Para,Basis,Args)
 % Arguments ignored if input as empty string: ''
 % Input:     File = Path to spectrum
 % Optional:  File_Ref = Water reference spectrum
+%            OutName = Path/Name to save Tarquin outputs under
 %            Para = Path to parameter file (src/common/console.cpp for 
 %                   available options)
 %            Basis = internal basis set to use : 1h_brain, 1h_brain_exmm, 
@@ -34,7 +35,7 @@ function[Struct , RUN] = Tarquin_Run(File,File_Ref,Para,Basis,Args)
 
 Tarquin_Config;
 
-if ~exist(File,'files')
+if ~exist(File,'file')
     error('Metabolite File: %s not found!',File)
 end
 
@@ -62,6 +63,13 @@ if exist('File_Ref','var') && ~strcmp('',File_Ref)
     end
     RUN = sprintf('%s --input_w %s',RUN,File_Ref);              % If reference scan specified, include it
 end
+if exist('OutName','var') && ~strcmp('',Para)
+    Out=[OutName,'_Out.csv'];Fit=[OutName,'_Fit.csv'];
+else
+    % If not outfile, then generate temp file and delete once in Matlab
+    Out=[tempname,'_Out.csv'];Fit=[tempname,'_Fit.csv'];
+    Del=1;
+end
 if exist('Para','var') && ~strcmp('',Para)
     if ~exist(Para,'file')
         warning('Parameter file not found. Proceeding anyway.')
@@ -75,17 +83,13 @@ if exist('Args','var') && ~strcmp('',Args)
     RUN = sprintf('%s %s',RUN,Args);                            % If additional arguments included, add them
 end
 
-% Generate two temp files (in /tmp/) with unique name, then parse this to
-% Read routine.
-Out=[tempname,'_Out.csv'];Fit=[tempname,'_Fit.csv'];
-
 RUN = sprintf('%s --output_csv %s --output_fit %s',RUN,Out,Fit); % Finally, output .csv in scratch for matlab load
 
 fprintf('%s\tFitting: %s...',datetime,File)
 [ ~ , CMDout] = system(RUN); % Run Tarquin for these options
 disp('... Done!')
 
-Struct = Tarquin_Read({Out,Fit}); % Run coversion from Tarquin .csv to Matlab format
+Struct = Tarquin_Read({Out,Fit},Del); % Run coversion from Tarquin .csv to Matlab format
 
 if exist('Temp','var')
     Temp.p.Version.Run = '1.0';

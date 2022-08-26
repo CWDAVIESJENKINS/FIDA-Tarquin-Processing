@@ -1,4 +1,4 @@
-function[OUT] = Tarquin_Read(Loc)
+function[OUT] = Tarquin_Read(Loc,Del)
 %function[OUT] = Tarquin_Read(Loc)
 % V1.0
 % Function for the reading and reformatting Tarquin .csv data to matlab my
@@ -10,7 +10,9 @@ function[OUT] = Tarquin_Read(Loc)
 % Output:    OUTPUT = Matlab data structure containing the output and
 %                     individual metabolite fits
 
-Tarquin_Config
+if ~exist('Del','var')
+    Tarquin_Config
+end
 
 if ischar(Loc) % If single file, assume it's fit results
     Loc={Loc,''};
@@ -19,7 +21,7 @@ end
 if exist(Loc{1},'file')
 %% Reading output 1
     disp('Reading Output Data ...')
-    Temp = delimread(Loc{1},',','mixed');Temp = Temp.mixed;   %Read Out.csv into a cell array using delimread
+    Temp = ReadCells(Loc{1});
 
     AmpsAndErr = Temp([3,6],4:end)';AmpsAndErr=reshape(AmpsAndErr(~isnan(cell2mat(AmpsAndErr))),[],2);%Amps and CRLBs
     LBasis = size(AmpsAndErr,1);%length of basis set
@@ -41,7 +43,7 @@ if exist(Loc{1},'file')
     end
     
     %populate fit parameters
-    FitParams = Temp(boolean([zeros(11,1);~cellfun(@(x) isnumeric(x), Temp(12:end,1))]),[1,2]);
+    FitParams = Temp(logical([zeros(11,1);~cellfun(@(x) isnumeric(x), Temp(12:end,1))]),[1,2]);
     for J=1:size(FitParams,1)
         OUT.Param.(CleanUpName(FitParams{J,1})) = FitParams{J,2};
     end
@@ -50,8 +52,7 @@ if exist(Loc{1},'file')
 %% Reading output 2    
     if exist(Loc{2},'file')
         disp('Reading Fit Data ...')
-        Temp2 = delimread(Loc{2},',','mixed');Temp2 = Temp2.mixed; % Read in individual metabolite fits
-
+        Temp2 = ReadCells(Loc{2});
         OUT.Plot.ppm = cell2mat(Temp2(3:end,1));
         OUT.Plot.Data = cell2mat(Temp2(3:end,2));
         OUT.Plot.Fit = cell2mat(Temp2(3:end,3));
@@ -79,4 +80,9 @@ end
 
 function[OutStr] = CleanUpName(InStr) %Remove special characters from Tarquin fields
 OutStr = strrep(strrep(strrep(strrep(InStr,' ',''),'(','_'),')',''),'/','p');
+end
+
+function[OutCell] = ReadCells(InCell)
+OutCell = readcell(InCell);
+OutCell( cellfun( @(OutCell) isa(OutCell,'missing'), OutCell ) ) = {[]};
 end
