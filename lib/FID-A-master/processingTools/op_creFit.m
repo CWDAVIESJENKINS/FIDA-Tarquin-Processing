@@ -21,7 +21,11 @@
 %               parsFit(4) = Baseline slope;
 %               parsFit(5) = Baseline DC Offset;
 
-function parsFit=op_creFit(in,ph0,ph1);
+function parsFit=op_creFit(in,ph0,ph1,PLT);
+
+if ~exist('PLT','var')
+    PLT=true;
+end
 
 if in.flags.isISIS
     error('ERROR:  must have combined subspecs in order to do this!  ABORTING');
@@ -43,8 +47,9 @@ ppmmax=3.15;
 ppm=in.ppm((in.ppm>ppmmin)&(in.ppm<ppmmax));
 spec=specs(((in.ppm>ppmmin)&(in.ppm<ppmmax)));
 
-plot(ppm,spec);
-
+if PLT
+    plot(ppm,spec);
+end
 
 parsGuess=zeros(1,4);
 parsGuess(1)=max(real(spec)); %Amplitude
@@ -57,16 +62,17 @@ yGuess=op_lorentz_linbas(parsGuess,ppm);
 parsFit=nlinfit(ppm,real(spec'),@op_lorentz_linbas,parsGuess);
 yFit=op_lorentz_linbas(parsFit,ppm);
 
-plot(ppm,spec,ppm,yGuess,':',ppm,yFit);
-legend('data','guess','fit');
-parsFit
-parsGuess
+if PLT
+    plot(ppm,spec,ppm,yGuess,':',ppm,yFit);
+    legend('data','guess','fit');
+    parsFit
+    parsGuess
 
-area=parsFit(:,1).*parsFit(:,2);
-for n=1:size(area,1)
-    disp(['Area under the ' num2str(n) 'th fitted curve is: ' num2str(area(n))]);
+    area=parsFit(:,1).*parsFit(:,2);
+    for n=1:size(area,1)
+        disp(['Area under the ' num2str(n) 'th fitted curve is: ' num2str(area(n))]);
+    end
+    area=sum(area);
+    disp(['Area under the fitted curve is: ' num2str(area)]);
 end
-area=sum(area);
-disp(['Area under the fitted curve is: ' num2str(area)]);
-
 

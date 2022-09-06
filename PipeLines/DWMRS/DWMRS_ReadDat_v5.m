@@ -28,7 +28,7 @@ function[Out_Structrure , QA] = DWMRS_ReadDat_v5(IN , OutDir, WaterScan)
 
 iterin=10;
 tmaxin=0.25;
-BadAv_nsd=2;
+BadAv_nsd=3;
 
 if ~exist('WaterScan','var')
     WaterScan = false;
@@ -237,11 +237,14 @@ for J=1:RepSize % Again loop over diffusion conditions
         Spec_Av{J} = op_leftshift(op_averaging(Rep),Rep.pointsToLeftshift);
         
         % Perform frequency and phase alignement using the creatine peak
-        %Spec_Av{J} = FnPh_m(Spec_Av{J});
+        Spec_Av{J} = FnPh_m(Spec_Av{J});
+
+        Spec_NoReg = op_averaging(Spec_cc2{J});
     else
         Rep=op_alignAverages(Spec_cc2{J},5*tmaxin,'n');
         Spec_Av{J} = op_leftshift(op_averaging(Rep),Rep.pointsToLeftshift);
         Spec_Av{J} = FnPh_w(Spec_Av{J});  
+        Spec_NoReg = op_averaging(Spec_cc2{J});
     end
     
     if Water_reference
@@ -259,7 +262,7 @@ for J=1:RepSize % Again loop over diffusion conditions
             Specw_Av{J}.dims.averages = 0;
         end
         
-
+        
         % Perform eddy current correction using the water acquisition. Then
         % frequency and phase shift based on the creatine peak of the ECC
         % spectrum
@@ -281,8 +284,13 @@ for J=1:RepSize % Again loop over diffusion conditions
         Out_fids(:,J)=Spec_Av{J}.fids;
     end
     %QA
-    QA.Output.SNR = max(abs(Spec_Av{J}.specs))./CalcNoise(Spec_Av{J}.ppm,Spec_Av{J}.specs');
+    QA.Output.SNR(J) = max(abs(Spec_Av{J}.specs))./CalcNoise(Spec_Av{J}.ppm,Spec_Av{J}.specs');
+    QA.Averages.SNRComp(J) = QA.Output.SNR(J)/(max(abs(Spec_NoReg.specs))./CalcNoise(Spec_NoReg.ppm,Spec_NoReg.specs'));
     
+    PARS = op_creFit(Spec_Av_ECC{J},0,0,0);
+    QA.Output.LW(J) = PARS(2);
+    PARS = op_creFit(Spec_NoReg,0,0,0);
+    QA.Averages.LWComp(J) = QA.Output.LW(J)/PARS(2);
 end
 %% Populate output structures
 if Water_reference
